@@ -2,8 +2,8 @@
 # ---------------------------------------------------------------------------
 # COMANDOS.py
 # Authors: Franz Cortez, Julio Cerna
-# Usage: COMANDOS <Ráster_de_entrada> 
-# Description: 
+# Description: Automatizacion del analisis de imagenes satelitales del decierto de Atacama
+# Version: 1.0.0
 # ---------------------------------------------------------------------------
 
 # Import arcpy module
