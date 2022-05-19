@@ -55,14 +55,18 @@ def crear(rutaDefecto):
 def rectificarCoordenadas(raster_entrada, ruta_temporal, coordenadas):
     arcpy.ProjectRaster_management(raster_entrada , ruta_temporal, coordenadas, resampling_type="NEAREST", cell_size="30 30", geographic_transform="", Registration_Point="", in_coor_system="", vertical="NO_VERTICAL")
 
+def primer_recorte(raster_entrada, nombre_recorte, extension_salida):
+    arcpy.Clip_management(raster_entrada, "626992.524499999 7422179.91 659638.799700004 7457522.4788", nombre_recorte, extension_salida, "-99999999", "ClippingGeometry", "NO_MAINTAIN_EXTENT")
+
 # Script arguments
-arcpy.AddMessage("*************OK***************")
+arcpy.AddMessage("*************INICIO**************")
 rutaDefecto = arcpy.GetParameterAsText(0)
 nombre = arcpy.GetParameterAsText(1).upper()
 Raster_de_entrada = arcpy.GetParameterAsText(2)
 nombre2 = arcpy.GetParameterAsText(3).upper()
 Raster_de_entrada2 = arcpy.GetParameterAsText(4)
 coordenada = arcpy.GetParameterAsText(5)
+shapefile = arcpy.GetParameterAsText(6)
 
 crear(rutaDefecto)
 
@@ -73,16 +77,23 @@ now = datetime.now()
 nombreFinal = current_date_format(now) + nombre
 nombreFinal2 = current_date_format(now) + nombre2
 
-rutaTemporal = rutaDefecto + '\\Temporal\\' + nombreFinal
-rutaTemporal2 = rutaDefecto + '\\Temporal\\' + nombreFinal2
+rutaTemporal = rutaDefecto + '\\Temporal\\' + nombreFinal + ".tif"
+rutaTemporal2 = rutaDefecto + '\\Temporal\\' + nombreFinal2 + ".tif"
 
-arcpy.AddMessage(coordenada)
-
-arcpy.AddMessage("*************PROCESANDO************")
+arcpy.AddMessage("*************PROCESANDO CICLO 1************")
 
 # Process: Proyectar ráster
-rectificarCoordenadas(str(Raster_de_entrada), str(rutaTemporal), str(coordenada))
-rectificarCoordenadas(str(Raster_de_entrada2), str(rutaTemporal2), str(coordenada))
+rectificarCoordenadas(Raster_de_entrada, rutaTemporal, coordenada)
+rectificarCoordenadas(Raster_de_entrada2, rutaTemporal2, coordenada)
 
+arcpy.AddMessage("*************INICIANDO CICLO 2************")
+######################################################### CICLO 2 ######################################################################
+# Local variables:
+ruta_temporal_re_1 = rutaDefecto + '\\Temporal\\' + nombreFinal + "_re.tif"
+ruta_temporal_re_2 = rutaDefecto + '\\Temporal\\' + nombreFinal2 + "_re.tif"
 
-arcpy.AddMessage("*************PROCESADO************")
+# Process: Recortar
+primer_recorte(rutaTemporal, ruta_temporal_re_1, shapefile)
+primer_recorte(rutaTemporal2, ruta_temporal_re_2, shapefile)
+
+arcpy.AddMessage("*************PROCESADO CICLO 2************")
