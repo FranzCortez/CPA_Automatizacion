@@ -27,7 +27,6 @@ def carpeta_format(date):
 
     return messsage
 
-
 def creacion_carpetas(rutaDefecto):
     try:
         os.makedirs(rutaDefecto + '\\Shapefile')
@@ -53,16 +52,22 @@ def creacion_carpetas(rutaDefecto):
 def crear(rutaDefecto):
     creacion_carpetas(str(rutaDefecto))
 
+def rectificarCoordenadas(raster_entrada, ruta_temporal, coordenadas):
+    arcpy.ProjectRaster_management(raster_entrada , ruta_temporal, coordenadas, resampling_type="NEAREST", cell_size="30 30", geographic_transform="", Registration_Point="", in_coor_system="", vertical="NO_VERTICAL")
+
 # Script arguments
 arcpy.AddMessage("*************OK***************")
-
-nombre = arcpy.GetParameterAsText(0).upper()
-rutaDefecto = arcpy.GetParameterAsText(1)
+rutaDefecto = arcpy.GetParameterAsText(0)
+nombre = arcpy.GetParameterAsText(1).upper()
 Raster_de_entrada = arcpy.GetParameterAsText(2)
 nombre2 = arcpy.GetParameterAsText(3).upper()
 Raster_de_entrada2 = arcpy.GetParameterAsText(4)
+coordenada = arcpy.GetParameterAsText(5)
 
 crear(rutaDefecto)
+
+if( coordenada == '' ):
+    coordenada = "PROJCS['WGS_1984_UTM_Zone_19S',GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]],PROJECTION['Transverse_Mercator'],PARAMETER['False_Easting',500000.0],PARAMETER['False_Northing',10000000.0],PARAMETER['Central_Meridian',-69.0],PARAMETER['Scale_Factor',0.9996],PARAMETER['Latitude_Of_Origin',0.0],UNIT['Meter',1.0]]"
 
 now = datetime.now()
 nombreFinal = current_date_format(now) + nombre
@@ -71,10 +76,13 @@ nombreFinal2 = current_date_format(now) + nombre2
 rutaTemporal = rutaDefecto + '\\Temporal\\' + nombreFinal
 rutaTemporal2 = rutaDefecto + '\\Temporal\\' + nombreFinal2
 
-arcpy.AddMessage("*************PROCESANDO************")
-# Process: Proyectar ráster
-arcpy.ProjectRaster_management(str(Raster_de_entrada) , str(rutaTemporal), out_coor_system="PROJCS['WGS_1984_UTM_Zone_19S',GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]],PROJECTION['Transverse_Mercator'],PARAMETER['False_Easting',500000.0],PARAMETER['False_Northing',10000000.0],PARAMETER['Central_Meridian',-69.0],PARAMETER['Scale_Factor',0.9996],PARAMETER['Latitude_Of_Origin',0.0],UNIT['Meter',1.0]]", resampling_type="NEAREST", cell_size="30 30", geographic_transform="", Registration_Point="", in_coor_system="PROJCS['WGS_1984_UTM_Zone_19N',GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]],PROJECTION['Transverse_Mercator'],PARAMETER['False_Easting',500000.0],PARAMETER['False_Northing',0.0],PARAMETER['Central_Meridian',-69.0],PARAMETER['Scale_Factor',0.9996],PARAMETER['Latitude_Of_Origin',0.0],UNIT['Meter',1.0]]", vertical="NO_VERTICAL")
+arcpy.AddMessage(coordenada)
 
-arcpy.ProjectRaster_management(str(Raster_de_entrada2) , str(rutaTemporal2), out_coor_system="PROJCS['WGS_1984_UTM_Zone_19S',GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]],PROJECTION['Transverse_Mercator'],PARAMETER['False_Easting',500000.0],PARAMETER['False_Northing',10000000.0],PARAMETER['Central_Meridian',-69.0],PARAMETER['Scale_Factor',0.9996],PARAMETER['Latitude_Of_Origin',0.0],UNIT['Meter',1.0]]", resampling_type="NEAREST", cell_size="30 30", geographic_transform="", Registration_Point="", in_coor_system="PROJCS['WGS_1984_UTM_Zone_19N',GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]],PROJECTION['Transverse_Mercator'],PARAMETER['False_Easting',500000.0],PARAMETER['False_Northing',0.0],PARAMETER['Central_Meridian',-69.0],PARAMETER['Scale_Factor',0.9996],PARAMETER['Latitude_Of_Origin',0.0],UNIT['Meter',1.0]]", vertical="NO_VERTICAL")
+arcpy.AddMessage("*************PROCESANDO************")
+
+# Process: Proyectar ráster
+rectificarCoordenadas(str(Raster_de_entrada), str(rutaTemporal), str(coordenada))
+rectificarCoordenadas(str(Raster_de_entrada2), str(rutaTemporal2), str(coordenada))
+
 
 arcpy.AddMessage("*************PROCESADO************")
