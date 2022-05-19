@@ -58,6 +58,10 @@ def rectificarCoordenadas(raster_entrada, ruta_temporal, coordenadas):
 def primer_recorte(raster_entrada, nombre_recorte, extension_salida):
     arcpy.Clip_management(raster_entrada, "626992.524499999 7422179.91 659638.799700004 7457522.4788", nombre_recorte, extension_salida, "-99999999", "ClippingGeometry", "NO_MAINTAIN_EXTENT")
 
+def calculo(formula, ruta_salida):
+    arcpy.gp.RasterCalculator_sa(formula, ruta_salida)
+
+
 # Script arguments
 arcpy.AddMessage("*************INICIO**************")
 rutaDefecto = arcpy.GetParameterAsText(0)
@@ -67,11 +71,15 @@ nombre2 = arcpy.GetParameterAsText(3).upper()
 Raster_de_entrada2 = arcpy.GetParameterAsText(4)
 coordenada = arcpy.GetParameterAsText(5)
 shapefile = arcpy.GetParameterAsText(6)
+L =  arcpy.GetParameterAsText(7)
 
 crear(rutaDefecto)
 
 if( coordenada == '' ):
     coordenada = "PROJCS['WGS_1984_UTM_Zone_19S',GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]],PROJECTION['Transverse_Mercator'],PARAMETER['False_Easting',500000.0],PARAMETER['False_Northing',10000000.0],PARAMETER['Central_Meridian',-69.0],PARAMETER['Scale_Factor',0.9996],PARAMETER['Latitude_Of_Origin',0.0],UNIT['Meter',1.0]]"
+
+if(L == ""):
+    L = 0
 
 now = datetime.now()
 nombreFinal = current_date_format(now) + nombre
@@ -96,4 +104,17 @@ ruta_temporal_re_2 = rutaDefecto + '\\Temporal\\' + nombreFinal2 + "_re.tif"
 primer_recorte(rutaTemporal, ruta_temporal_re_1, shapefile)
 primer_recorte(rutaTemporal2, ruta_temporal_re_2, shapefile)
 
+# Local variables:
+x = ruta_temporal_re_1
+y = ruta_temporal_re_2
+
+formula = "( ( Float(",x,") - Float(",y,") ) / ( Float(",x,") + Float(",y,") + ",L," ) ) * ( 1 + ",L,")"
+ruta_salida = rutaDefecto + '\\Temporal\\' + nombreFinal + nombre2 + "_cal.tif" # MAY19B3B5_cal.tif
+
+# Process: Calculadora ráster
+calculo(formula, ruta_salida)
+
 arcpy.AddMessage("*************PROCESADO CICLO 2************")
+
+#arcpy.AddMessage("*************INICIANDO CICLO 3************")
+######################################################### CICLO 3 ######################################################################
