@@ -2,11 +2,12 @@
 # ---------------------------------------------------------------------------
 # COMANDOS.py
 # Authors: Franz Cortez, Julio Cerna
-# Description: Automatizacion del analisis de imagenes satelitales del decierto de Atacama
+# Description: Automatizacion del analisis de imágenes satelitales del desierto de Atacama
 # Version: 1.0.0
 # ---------------------------------------------------------------------------
 
 # Import arcpy module
+from re import X
 import arcpy
 from datetime import datetime
 import os
@@ -79,7 +80,7 @@ if( coordenada == '' ):
     coordenada = "PROJCS['WGS_1984_UTM_Zone_19S',GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]],PROJECTION['Transverse_Mercator'],PARAMETER['False_Easting',500000.0],PARAMETER['False_Northing',10000000.0],PARAMETER['Central_Meridian',-69.0],PARAMETER['Scale_Factor',0.9996],PARAMETER['Latitude_Of_Origin',0.0],UNIT['Meter',1.0]]"
 
 if(L == ""):
-    L = 0
+    L = '0'
 
 now = datetime.now()
 nombreFinal = current_date_format(now) + nombre
@@ -108,8 +109,10 @@ primer_recorte(rutaTemporal2, ruta_temporal_re_2, shapefile)
 x = ruta_temporal_re_1
 y = ruta_temporal_re_2
 
-formula = "( ( Float(",x,") - Float(",y,") ) / ( Float(",x,") + Float(",y,") + ",L," ) ) * ( 1 + ",L,")"
+formula = '( ( (Float("' + x + '")) - (Float("' + y + '")) ) / ( (Float("' + x + '")) + (Float("' + y + '")) + ' + L + ' ) ) * ( 1 + ' + L + ' )'
+arcpy.AddMessage(formula)
 ruta_salida = rutaDefecto + '\\Temporal\\' + nombreFinal + nombre2 + "_cal.tif" # MAY19B3B5_cal.tif
+
 
 # Process: Calculadora ráster
 calculo(formula, ruta_salida)
@@ -118,3 +121,5 @@ arcpy.AddMessage("*************PROCESADO CICLO 2************")
 
 #arcpy.AddMessage("*************INICIANDO CICLO 3************")
 ######################################################### CICLO 3 ######################################################################
+
+"( ( Float(\"MAY19_B3_re.tif\") - Float(\"MAY19_B5_re.tif\") ) / ( Float(\"MAY19_B3_re.tif\") + Float(\"MAY19_B5_re.tif\") + 0 ) ) * ( 1 + 0 )"
