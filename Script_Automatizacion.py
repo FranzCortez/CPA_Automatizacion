@@ -9,6 +9,7 @@
 # Import arcpy module
 from re import X
 import arcpy
+from arcpy.sa import *
 from datetime import datetime
 import os
 
@@ -89,14 +90,20 @@ nombreFinal2 = current_date_format(now) + nombre2
 rutaTemporal = rutaDefecto + '\\Temporal\\' + nombreFinal + ".tif"
 rutaTemporal2 = rutaDefecto + '\\Temporal\\' + nombreFinal2 + ".tif"
 
-arcpy.AddMessage("*************PROCESANDO CICLO 1************")
+############################## CICLO 1 ##############################
+
+arcpy.AddMessage("************* INICIO CICLO 1 *************")
 
 # Process: Proyectar ráster
 rectificarCoordenadas(Raster_de_entrada, rutaTemporal, coordenada)
 rectificarCoordenadas(Raster_de_entrada2, rutaTemporal2, coordenada)
 
-arcpy.AddMessage("*************INICIANDO CICLO 2************")
-######################################################### CICLO 2 ######################################################################
+arcpy.AddMessage("************* FIN CICLO 1 *************")
+
+############################## CICLO 2 ##############################
+
+arcpy.AddMessage("************* INICIANDO CICLO 2 *************")
+
 # Local variables:
 ruta_temporal_re_1 = rutaDefecto + '\\Temporal\\' + nombreFinal + "_re.tif"
 ruta_temporal_re_2 = rutaDefecto + '\\Temporal\\' + nombreFinal2 + "_re.tif"
@@ -110,16 +117,33 @@ x = ruta_temporal_re_1
 y = ruta_temporal_re_2
 
 formula = '( ( (Float("' + x + '")) - (Float("' + y + '")) ) / ( (Float("' + x + '")) + (Float("' + y + '")) + ' + L + ' ) ) * ( 1 + ' + L + ' )'
-arcpy.AddMessage(formula)
-ruta_salida = rutaDefecto + '\\Temporal\\' + nombreFinal + nombre2 + "_cal.tif" # MAY19B3B5_cal.tif
 
+ruta_salida = rutaDefecto + '\\Temporal\\' + nombreFinal + nombre2 + "_cal.tif"
 
 # Process: Calculadora ráster
 calculo(formula, ruta_salida)
 
-arcpy.AddMessage("*************PROCESADO CICLO 2************")
+arcpy.AddMessage("************* FIN CICLO 2 *************")
 
-#arcpy.AddMessage("*************INICIANDO CICLO 3************")
-######################################################### CICLO 3 ######################################################################
+arcpy.AddMessage("************* INICIANDO CICLO 3 ************")
+################################### CICLO 3 #########################################
 
-"( ( Float(\"MAY19_B3_re.tif\") - Float(\"MAY19_B5_re.tif\") ) / ( Float(\"MAY19_B3_re.tif\") + Float(\"MAY19_B5_re.tif\") + 0 ) ) * ( 1 + 0 )"
+# # Get Raster Properties
+maxvalue = arcpy.GetRasterProperties_management(ruta_salida, "MAXIMUM")
+
+ruta_final = rutaDefecto + '\\Temporal\\' + nombreFinal + nombre2 + "_FINAL.tif"
+
+#Reclass
+myRemapRange = RemapRange([["0.000000", maxvalue, 1]])
+outReclass = Reclassify(ruta_salida, "Value", myRemapRange)
+outReclass.save(ruta_final)
+
+arcpy.AddMessage("************* FIN CICLO 3 *************")
+
+arcpy.AddMessage("************* INICIANDO CICLO 4 ************")
+
+#solo saca la tabla!
+ruta_data = rutaDefecto + '\\Data\\' + nombreFinal + nombre2 + "Cal.tif"
+arcpy.gp.ZonalStatisticsAsTable_sa(ruta_final, "VALUE", ruta_final, ruta_data, "DATA", "ALL")
+
+arcpy.AddMessage("************* FIN CICLO 4 *************")
