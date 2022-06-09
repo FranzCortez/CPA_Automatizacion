@@ -42,7 +42,7 @@ def creacion_carpetas(rutaDefecto):
 
     try:
         now = datetime.now()
-        os.makedirs(rutaDefecto + '\\Data\\' + carpeta_format(now))
+        os.makedirs(rutaDefecto + '\\Data\\')
     except:
         pass
 
@@ -74,6 +74,9 @@ Raster_de_entrada2 = arcpy.GetParameterAsText(4)
 coordenada = arcpy.GetParameterAsText(5)
 shapefile = arcpy.GetParameterAsText(6)
 L =  arcpy.GetParameterAsText(7)
+limite_exclusion = arcpy.GetParameterAsText(8)
+mostrar_dataset = str(arcpy.GetParameterAsText(9))
+arcpy.AddMessage(mostrar_dataset)
 
 crear(rutaDefecto)
 
@@ -131,12 +134,20 @@ arcpy.AddMessage("************* INICIANDO CICLO 3 ************")
 # # Get Raster Properties
 maxvalue = arcpy.GetRasterProperties_management(ruta_salida, "MAXIMUM")
 
-ruta_final = rutaDefecto + '\\Temporal\\' + nombreFinal + nombre2 + "_FINAL.tif"
+ruta_final = rutaDefecto + '\\Imagenes\\' + carpeta_format(now) + '\\' + nombreFinal + nombre2 + "_PROCESADA.tif"
 
 #Reclass
-myRemapRange = RemapRange([["0.000000", maxvalue, 1]])
+myRemapRange = RemapRange([[limite_exclusion, maxvalue, 1]])
 outReclass = Reclassify(ruta_salida, "Value", myRemapRange)
 outReclass.save(ruta_final)
+
+if mostrar_dataset == "true":
+    arcpy.BuildPyramids_management(ruta_final, '-1', 'NONE', 'NEAREST', 'DEFAULT', '75', 'OVERWRITE')
+    mxd = arcpy.mapping.MapDocument('CURRENT')
+    df = arcpy.mapping.ListDataFrames(mxd, "*")[0]
+    addLayer = arcpy.mapping.Layer(ruta_final)
+    arcpy.mapping.AddLayer(df, addLayer)
+    arcpy.RefreshTOC()
 
 arcpy.AddMessage("************* FIN CICLO 3 *************")
 
