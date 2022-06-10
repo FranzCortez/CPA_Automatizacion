@@ -142,7 +142,6 @@ outReclass = Reclassify(ruta_salida, "Value", myRemapRange)
 outReclass.save(ruta_final)
 
 if mostrar_dataset == "true":
-    arcpy.BuildPyramids_management(ruta_final, '-1', 'NONE', 'NEAREST', 'DEFAULT', '75', 'OVERWRITE')
     mxd = arcpy.mapping.MapDocument('CURRENT')
     df = arcpy.mapping.ListDataFrames(mxd, "*")[0]
     addLayer = arcpy.mapping.Layer(ruta_final)
@@ -153,8 +152,14 @@ arcpy.AddMessage("************* FIN CICLO 3 *************")
 
 arcpy.AddMessage("************* INICIANDO CICLO 4 ************")
 
-#solo saca la tabla!
-ruta_data = rutaDefecto + '\\Data\\' + nombreFinal + nombre2 + "Cal.tif"
+#Crea tabla
+ruta_data = rutaDefecto + '\\Temporal\\' + nombreFinal + nombre2 + "Tabla"
 arcpy.gp.ZonalStatisticsAsTable_sa(ruta_final, "VALUE", ruta_final, ruta_data, "DATA", "ALL")
+
+# crea archivo excel XLSX
+shapefile = shapefile.replace(" ", "_")
+arcpy.AddMessage(shapefile)
+ruta_excel = rutaDefecto + '\\Temporal\\' + shapefile + '.xls'
+arcpy.TableToExcel_conversion(ruta_data, ruta_excel, Use_field_alias_as_column_header="ALIAS", Use_domain_and_subtype_description="CODE")
 
 arcpy.AddMessage("************* FIN CICLO 4 *************")
