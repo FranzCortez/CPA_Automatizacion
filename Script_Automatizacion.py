@@ -57,8 +57,18 @@ def crear(rutaDefecto):
 def rectificarCoordenadas(raster_entrada, ruta_temporal, coordenadas):
     arcpy.ProjectRaster_management(raster_entrada , ruta_temporal, coordenadas, resampling_type="NEAREST", cell_size="30 30", geographic_transform="", Registration_Point="", in_coor_system="", vertical="NO_VERTICAL")
 
-def primer_recorte(raster_entrada, nombre_recorte, extension_salida):
-    arcpy.Clip_management(raster_entrada, "626992.524499999 7422179.91 659638.799700004 7457522.4788", nombre_recorte, extension_salida, "-99999999", "ClippingGeometry", "NO_MAINTAIN_EXTENT")
+def primer_recorte(raster_entrada, nombre_recorte, shapefile):
+
+    desc = arcpy.Describe(shapefile)
+
+    xMin = desc.extent.XMin
+    xMax = desc.extent.XMax
+    yMin = desc.extent.YMin
+    yMax = desc.extent.YMax
+
+    pos = str(xMin) + " " + str(yMin) + " " + str(xMax) + " " + str(yMax)
+
+    arcpy.Clip_management(raster_entrada, pos, nombre_recorte, shapefile, "-99999999", "ClippingGeometry", "NO_MAINTAIN_EXTENT")
 
 def calculo(formula, ruta_salida):
     arcpy.gp.RasterCalculator_sa(formula, ruta_salida)
@@ -76,7 +86,6 @@ shapefile = arcpy.GetParameterAsText(6)
 L =  arcpy.GetParameterAsText(7)
 limite_exclusion = arcpy.GetParameterAsText(8)
 mostrar_dataset = str(arcpy.GetParameterAsText(9))
-arcpy.AddMessage(mostrar_dataset)
 
 crear(rutaDefecto)
 
@@ -141,13 +150,6 @@ myRemapRange = RemapRange([[limite_exclusion, maxvalue, 1]])
 outReclass = Reclassify(ruta_salida, "Value", myRemapRange)
 outReclass.save(ruta_final)
 
-if mostrar_dataset == "true":
-    mxd = arcpy.mapping.MapDocument('CURRENT')
-    df = arcpy.mapping.ListDataFrames(mxd, "*")[0]
-    addLayer = arcpy.mapping.Layer(ruta_final)
-    arcpy.mapping.AddLayer(df, addLayer)
-    arcpy.RefreshTOC()
-
 arcpy.AddMessage("************* FIN CICLO 3 *************")
 
 arcpy.AddMessage("************* INICIANDO CICLO 4 ************")
@@ -156,10 +158,19 @@ arcpy.AddMessage("************* INICIANDO CICLO 4 ************")
 ruta_data = rutaDefecto + '\\Temporal\\' + nombreFinal + nombre2 + "Tabla"
 arcpy.gp.ZonalStatisticsAsTable_sa(ruta_final, "VALUE", ruta_final, ruta_data, "DATA", "ALL")
 
-# crea archivo excel XLSX
+# crea archivo excel XLS
 shapefile = shapefile.replace(" ", "_")
-arcpy.AddMessage(shapefile)
 ruta_excel = rutaDefecto + '\\Temporal\\' + shapefile + '.xls'
 arcpy.TableToExcel_conversion(ruta_data, ruta_excel, Use_field_alias_as_column_header="ALIAS", Use_domain_and_subtype_description="CODE")
 
 arcpy.AddMessage("************* FIN CICLO 4 *************")
+
+# ESTA AL FINAL PORQUE AL CREAR EL EXCEL SE "REINICIA" LOS ARCHIVOS Y SE QUITA
+if mostrar_dataset == "true":
+    md = arcpy.mapping.MapDocument('CURRENT')
+    df = arcpy.mapping.ListDataFrames(md)[0]
+    final = rutaDefecto + '\\Imagenes\\' + carpeta_format(now) + '\\' + nombreFinal + nombre2 + "_Layer"
+    result = arcpy.MakeRasterLayer_management(ruta_final, final)
+    layer = result.getOutput(0)
+    pt = arcpy.mapping.AddLayer(df, layer, 'AUTO_ARRANGE')
+    md.save()
