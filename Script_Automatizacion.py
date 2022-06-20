@@ -11,7 +11,9 @@ from re import X
 import arcpy
 from arcpy.sa import *
 from datetime import datetime
+import pandas as pd
 import os
+from os import remove
 
 def current_date_format(date):
     months = ("ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC")
@@ -72,6 +74,13 @@ def primer_recorte(raster_entrada, nombre_recorte, shapefile):
 
 def calculo(formula, ruta_salida):
     arcpy.gp.RasterCalculator_sa(formula, ruta_salida)
+    
+def retornar_fecha(date):
+    day = date.day
+    months = ("ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC")
+    month = months[date.month - 1]
+    year = date.year
+    return "{}_{}_{}".format(day, month, year)
 
 
 # Script arguments
@@ -160,8 +169,38 @@ arcpy.gp.ZonalStatisticsAsTable_sa(ruta_final, "VALUE", ruta_final, ruta_data, "
 
 # crea archivo excel XLS
 shapefile = shapefile.replace(" ", "_")
-ruta_excel = rutaDefecto + '\\Temporal\\' + shapefile + '.xls'
-arcpy.TableToExcel_conversion(ruta_data, ruta_excel, Use_field_alias_as_column_header="ALIAS", Use_domain_and_subtype_description="CODE")
+ruta_excel = rutaDefecto + '\\Data\\' + shapefile + '_EX_' + '(' + limite_exclusion + ').xls'
+archivo_existe = os.path.isfile(ruta_excel)
+# datos para el excel
+fecha = "20_JUL_2022"#retornar_fecha(now)
+columnas = ["FECHA", "CLASE 1 AREA", "CLASE 2 AREA"]
+nuevo_df = pd.DataFrame()
+
+if archivo_existe:
+    arcpy.AddMessage("************* EXCEL EXISTENTE, MODIFICANDO... ************")
+    # excel auxiliar para los nuevos datos
+    ruta_excel_nuevo = rutaDefecto + '\\Temporal\\' + shapefile + '_EX_' + limite_exclusion +'.xls'
+    arcpy.TableToExcel_conversion(ruta_data, ruta_excel_nuevo, Use_field_alias_as_column_header="ALIAS", Use_domain_and_subtype_description="CODE")
+    # concatenando al excel existente
+    df1 = pd.read_excel(ruta_excel)
+    df2 = pd.read_excel(ruta_excel_nuevo)['AREA']
+    nuevo_df = pd.concat([df1, pd.DataFrame([[fecha, df2[0], df2[1]]], columns=columnas)], sort=False)
+    # se eliminan los excel
+    remove(ruta_excel_nuevo)
+    remove(ruta_excel)
+    arcpy.AddMessage("************* MODIFICADO ************")
+
+else:    
+    # nuevo excel
+    arcpy.AddMessage("************* CREANDO NUEVO EXCEL ************")
+    arcpy.TableToExcel_conversion(ruta_data, ruta_excel, Use_field_alias_as_column_header="ALIAS", Use_domain_and_subtype_description="CODE")
+    arcpy.AddMessage("************* CREANDO NUEVO FORMATO ************")
+    df = pd.read_excel(ruta_excel)['AREA']
+    nuevo_df = pd.DataFrame([[fecha, df[0], df[1]]], columns=columnas)
+    arcpy.AddMessage("************* FORMATO CREADO ************")
+       
+nuevo_df.to_excel(ruta_excel, index=False, sheet_name="Hoja1")
+arcpy.AddMessage("************* EXCEL ACTUALIZADO ************") 
 
 arcpy.AddMessage("************* FIN CICLO 4 *************")
 
