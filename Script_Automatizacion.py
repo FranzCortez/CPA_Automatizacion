@@ -172,7 +172,7 @@ shapefile = shapefile.replace(" ", "_")
 ruta_excel = rutaDefecto + '\\Data\\' + shapefile + '_EX_' + '(' + limite_exclusion + ').xls'
 archivo_existe = os.path.isfile(ruta_excel)
 # datos para el excel
-fecha = "20_JUL_2022"#retornar_fecha(now)
+fecha = retornar_fecha(now)
 columnas = ["FECHA", "CLASE 1 AREA", "CLASE 2 AREA"]
 nuevo_df = pd.DataFrame()
 
