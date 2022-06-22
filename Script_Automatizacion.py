@@ -215,7 +215,16 @@ archivo_existe = os.path.isfile(ruta_excel)
 fecha = retornar_fecha(day, month, year)
 columnas = ["ID", "FECHA", "CLASE 0 AREA (m^2)", "CLASE 1 AREA (m^2)", "SATELITE"]
 nuevo_df = pd.DataFrame()
+
+if month < 10:
+    month = '0' + str(month)
+
 id = int(str(year)+str(month)+str(day))
+
+month = int(month)
+
+
+
 
 if archivo_existe:
     arcpy.AddMessage("************* EXCEL EXISTENTE, MODIFICANDO... ************")
