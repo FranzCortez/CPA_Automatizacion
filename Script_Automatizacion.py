@@ -10,28 +10,25 @@
 from re import X
 import arcpy
 from arcpy.sa import *
-from datetime import datetime
 import pandas as pd
 import os
 from os import remove
 
-def current_date_format(date):
+def current_date_format(day, month):
     months = ("ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC")
-    day = date.day
-    month = months[date.month - 1]
+    month = months[month - 1]
     messsage = "{}{}_".format(month, day)
 
     return messsage
 
-def carpeta_format(date):
+def carpeta_format(month, year):
     months = ("ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC")
-    month = months[date.month - 1]
-    year = date.year
+    month = months[month - 1]
     messsage = "{}_{}".format(month, year)
 
     return messsage
 
-def creacion_carpetas(rutaDefecto):
+def creacion_carpetas(rutaDefecto, month, year):
     try:
         os.makedirs(rutaDefecto + '\\Shapefile')
     except:
@@ -43,18 +40,17 @@ def creacion_carpetas(rutaDefecto):
         pass
 
     try:
-        now = datetime.now()
         os.makedirs(rutaDefecto + '\\Data\\')
     except:
         pass
 
     try:
-        os.makedirs(rutaDefecto + '\\Imagenes\\' + carpeta_format(now))
+        os.makedirs(rutaDefecto + '\\Imagenes\\' + carpeta_format(month,year))
     except:
         pass
 
-def crear(rutaDefecto):
-    creacion_carpetas(str(rutaDefecto))
+def crear(rutaDefecto, month, year):
+    creacion_carpetas(str(rutaDefecto), month, year)
 
 def rectificarCoordenadas(raster_entrada, ruta_temporal, coordenadas):
     arcpy.ProjectRaster_management(raster_entrada , ruta_temporal, coordenadas, resampling_type="NEAREST", cell_size="30 30", geographic_transform="", Registration_Point="", in_coor_system="", vertical="NO_VERTICAL")
@@ -75,11 +71,9 @@ def primer_recorte(raster_entrada, nombre_recorte, shapefile):
 def calculo(formula, ruta_salida):
     arcpy.gp.RasterCalculator_sa(formula, ruta_salida)
     
-def retornar_fecha(date):
-    day = date.day
+def retornar_fecha(day, month, year):
     months = ("ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC")
-    month = months[date.month - 1]
-    year = date.year
+    month = months[month - 1]
     return "{}_{}_{}".format(day, month, year)
 
 
@@ -95,8 +89,54 @@ shapefile = arcpy.GetParameterAsText(6)
 L =  arcpy.GetParameterAsText(7)
 limite_exclusion = arcpy.GetParameterAsText(8)
 mostrar_dataset = str(arcpy.GetParameterAsText(9))
+opcion = arcpy.GetParameterAsText(10)
+fecha = arcpy.GetParameterAsText(11)
 
-crear(rutaDefecto)
+arcpy.AddMessage(fecha)
+
+#restructura
+
+day = ""
+month = ""
+year = ""
+
+infoSatelite = ''
+
+if(opcion == 'LANDSAT'):
+    info = Raster_de_entrada.split("_")
+
+    day = int(info[3][6:8])
+    month = int(info[3][4:6])
+    year = int(info[3][0:4])
+
+    infoSatelite = info[0] + "_" + info[1] + "_" + info[5] + "_" + info[6]
+
+elif(opcion == 'SENTINEL'):
+
+    info = Raster_de_entrada.split("_")
+
+    day = int(info[3][6:8])
+    month = int(info[3][4:6])
+    year = int(info[3][0:4])
+
+    infoSatelite = "SENTINEL"
+
+else:
+    info = fecha.split("-") #24-06-2022
+
+    if(len(info[0]) == 4):
+        year = int(info[0])
+        month = int(info[1])
+        day = int(info[2])
+    else:
+        day = int(info[0])
+        month = int(info[1])
+        year = int(info[2])
+
+    infoSatelite = "OTRO"
+
+
+crear(rutaDefecto, month, year)
 
 if( coordenada == '' ):
     coordenada = "PROJCS['WGS_1984_UTM_Zone_19S',GEOGCS['GCS_WGS_1984',DATUM['D_WGS_1984',SPHEROID['WGS_1984',6378137.0,298.257223563]],PRIMEM['Greenwich',0.0],UNIT['Degree',0.0174532925199433]],PROJECTION['Transverse_Mercator'],PARAMETER['False_Easting',500000.0],PARAMETER['False_Northing',10000000.0],PARAMETER['Central_Meridian',-69.0],PARAMETER['Scale_Factor',0.9996],PARAMETER['Latitude_Of_Origin',0.0],UNIT['Meter',1.0]]"
@@ -104,9 +144,8 @@ if( coordenada == '' ):
 if(L == ""):
     L = '0'
 
-now = datetime.now()
-nombreFinal = current_date_format(now) + nombre
-nombreFinal2 = current_date_format(now) + nombre2
+nombreFinal = current_date_format(day, month) + nombre
+nombreFinal2 = current_date_format(day, month) + nombre2
 
 rutaTemporal = rutaDefecto + '\\Temporal\\' + nombreFinal + ".tif"
 rutaTemporal2 = rutaDefecto + '\\Temporal\\' + nombreFinal2 + ".tif"
@@ -152,7 +191,7 @@ arcpy.AddMessage("************* INICIANDO CICLO 3 ************")
 # # Get Raster Properties
 maxvalue = arcpy.GetRasterProperties_management(ruta_salida, "MAXIMUM")
 
-ruta_final = rutaDefecto + '\\Imagenes\\' + carpeta_format(now) + '\\' + nombreFinal + nombre2 + "_PROCESADA.tif"
+ruta_final = rutaDefecto + '\\Imagenes\\' + carpeta_format(month, year) + '\\' + nombreFinal + nombre2 + "_PROCESADA.tif"
 
 #Reclass
 myRemapRange = RemapRange([[limite_exclusion, maxvalue, 1]])
@@ -172,7 +211,7 @@ shapefile = shapefile.replace(" ", "_")
 ruta_excel = rutaDefecto + '\\Data\\' + shapefile + '_EX_' + '(' + limite_exclusion + ').xls'
 archivo_existe = os.path.isfile(ruta_excel)
 # datos para el excel
-fecha = retornar_fecha(now)
+fecha = retornar_fecha(day, month, year)
 columnas = ["FECHA", "CLASE 1 AREA", "CLASE 2 AREA"]
 nuevo_df = pd.DataFrame()
 
@@ -208,7 +247,7 @@ arcpy.AddMessage("************* FIN CICLO 4 *************")
 if mostrar_dataset == "true":
     md = arcpy.mapping.MapDocument('CURRENT')
     df = arcpy.mapping.ListDataFrames(md)[0]
-    final = rutaDefecto + '\\Imagenes\\' + carpeta_format(now) + '\\' + nombreFinal + nombre2 + "_Layer"
+    final = rutaDefecto + '\\Imagenes\\' + carpeta_format(month, year) + '\\' + nombreFinal + nombre2 + "_Layer"
     result = arcpy.MakeRasterLayer_management(ruta_final, final)
     layer = result.getOutput(0)
     pt = arcpy.mapping.AddLayer(df, layer, 'AUTO_ARRANGE')
