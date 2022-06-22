@@ -218,12 +218,12 @@ nuevo_df = pd.DataFrame()
 
 if month < 10:
     month = '0' + str(month)
+if day < 10:
+    day = '0' + str(day)
 
 id = int(str(year)+str(month)+str(day))
 
 month = int(month)
-
-
 
 
 if archivo_existe:
@@ -249,6 +249,7 @@ else:
     nuevo_df = pd.DataFrame([[id, fecha, df[0], df[1], infoSatelite]], columns=columnas)
     arcpy.AddMessage("************* FORMATO CREADO ************")
        
+nuevo_df = nuevo_df.sort_values(by=["ID"])
 nuevo_df.to_excel(ruta_excel, index=False, sheet_name="Hoja1")
 arcpy.AddMessage("************* EXCEL ACTUALIZADO ************") 
 
