@@ -13,6 +13,7 @@ from arcpy.sa import *
 import pandas as pd
 import os
 from os import remove
+from shutil import rmtree
 
 def current_date_format(day, month):
     months = ("ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC")
@@ -122,7 +123,9 @@ elif(opcion == 'SENTINEL'):
     infoSatelite = "SENTINEL"
 
 else:
-    info = fecha.split("-") #24-06-2022
+    fechaSinHora = fecha.split(" ")
+    info = fechaSinHora[0].split("-")
+
 
     if(len(info[0]) == 4):
         year = int(info[0])
@@ -251,3 +254,5 @@ if mostrar_dataset == "true":
     result = arcpy.MakeRasterLayer_management(ruta_final, final)
     layer = result.getOutput(0)
     pt = arcpy.mapping.AddLayer(df, layer, 'AUTO_ARRANGE')
+
+rmtree(rutaDefecto + '\\Temporal\\')
