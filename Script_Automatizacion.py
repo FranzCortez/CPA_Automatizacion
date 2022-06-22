@@ -93,8 +93,6 @@ mostrar_dataset = str(arcpy.GetParameterAsText(9))
 opcion = arcpy.GetParameterAsText(10)
 fecha = arcpy.GetParameterAsText(11)
 
-arcpy.AddMessage(fecha)
-
 #restructura
 
 day = ""
@@ -215,8 +213,9 @@ ruta_excel = rutaDefecto + '\\Data\\' + shapefile + '_EX_' + '(' + limite_exclus
 archivo_existe = os.path.isfile(ruta_excel)
 # datos para el excel
 fecha = retornar_fecha(day, month, year)
-columnas = ["FECHA", "CLASE 1 AREA", "CLASE 2 AREA"]
+columnas = ["ID", "FECHA", "CLASE 0 AREA (m^2)", "CLASE 1 AREA (m^2)", "SATELITE"]
 nuevo_df = pd.DataFrame()
+id = int(str(year)+str(month)+str(day))
 
 if archivo_existe:
     arcpy.AddMessage("************* EXCEL EXISTENTE, MODIFICANDO... ************")
@@ -238,7 +237,7 @@ else:
     arcpy.TableToExcel_conversion(ruta_data, ruta_excel, Use_field_alias_as_column_header="ALIAS", Use_domain_and_subtype_description="CODE")
     arcpy.AddMessage("************* CREANDO NUEVO FORMATO ************")
     df = pd.read_excel(ruta_excel)['AREA']
-    nuevo_df = pd.DataFrame([[fecha, df[0], df[1]]], columns=columnas)
+    nuevo_df = pd.DataFrame([[id, fecha, df[0], df[1], infoSatelite]], columns=columnas)
     arcpy.AddMessage("************* FORMATO CREADO ************")
        
 nuevo_df.to_excel(ruta_excel, index=False, sheet_name="Hoja1")
