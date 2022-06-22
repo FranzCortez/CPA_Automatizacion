@@ -212,4 +212,3 @@ if mostrar_dataset == "true":
     result = arcpy.MakeRasterLayer_management(ruta_final, final)
     layer = result.getOutput(0)
     pt = arcpy.mapping.AddLayer(df, layer, 'AUTO_ARRANGE')
-    md.save()
