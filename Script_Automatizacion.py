@@ -234,7 +234,7 @@ if archivo_existe:
     # concatenando al excel existente
     df1 = pd.read_excel(ruta_excel)
     df2 = pd.read_excel(ruta_excel_nuevo)['AREA']
-    nuevo_df = pd.concat([df1, pd.DataFrame([[fecha, df2[0], df2[1]]], columns=columnas)], sort=False)
+    nuevo_df = pd.concat([df1, pd.DataFrame([[id, fecha, df2[0], df2[1], infoSatelite]], columns=columnas)], sort=False)
     # se eliminan los excel
     remove(ruta_excel_nuevo)
     remove(ruta_excel)
