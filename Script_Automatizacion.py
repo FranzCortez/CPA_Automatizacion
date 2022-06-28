@@ -102,7 +102,10 @@ year = ""
 infoSatelite = ''
 
 if(opcion == 'LANDSAT'):
-    info = Raster_de_entrada.split("_")
+    
+
+    firstSplit = Raster_de_entrada.split("\\")
+    info = firstSplit.split("_")
 
     day = int(info[3][6:8])
     month = int(info[3][4:6])
@@ -112,7 +115,8 @@ if(opcion == 'LANDSAT'):
 
 elif(opcion == 'SENTINEL'):
 
-    info = Raster_de_entrada.split("_")
+    firstSplit = Raster_de_entrada.split("\\")
+    info = firstSplit.split("_")
 
     day = int(info[3][6:8])
     month = int(info[3][4:6])
