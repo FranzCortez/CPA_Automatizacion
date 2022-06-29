@@ -91,7 +91,8 @@ L =  arcpy.GetParameterAsText(7)
 limite_exclusion = arcpy.GetParameterAsText(8)
 mostrar_dataset = str(arcpy.GetParameterAsText(9))
 opcion = arcpy.GetParameterAsText(10)
-fecha = arcpy.GetParameterAsText(11)
+nombreOtro = arcpy.GetParameterAsText(11)
+fecha = arcpy.GetParameterAsText(12)
 
 #restructura
 
@@ -138,7 +139,7 @@ else:
         month = int(info[1])
         year = int(info[2])
 
-    infoSatelite = "OTRO"
+    infoSatelite = nombreOtro
 
 
 crear(rutaDefecto, month, year)
