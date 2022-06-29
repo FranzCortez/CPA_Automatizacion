@@ -15,10 +15,10 @@ import os
 from os import remove
 from shutil import rmtree
 
-def current_date_format(day, month):
+def current_date_format(day, month,year):
     months = ("ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC")
     month = months[month - 1]
-    messsage = "{}{}_".format(month, day)
+    messsage = "{}{}{}_".format(day,month,year)
 
     return messsage
 
@@ -116,7 +116,7 @@ if(opcion == 'LANDSAT'):
 elif(opcion == 'SENTINEL'):
 
     firstSplit = Raster_de_entrada.split("\\")
-    info = firstSplit.split("_")
+    info = firstSplit[len(firstSplit)-1].split("_")
 
     day = int(info[3][6:8])
     month = int(info[3][4:6])
@@ -149,8 +149,8 @@ if( coordenada == '' ):
 if(L == ""):
     L = '0'
 
-nombreFinal = current_date_format(day, month) + nombre
-nombreFinal2 = current_date_format(day, month) + nombre2
+nombreFinal = current_date_format(day, month, year) + nombre
+nombreFinal2 = current_date_format(day, month, year) + nombre2
 
 rutaTemporal = rutaDefecto + '\\Temporal\\' + nombreFinal + ".tif"
 rutaTemporal2 = rutaDefecto + '\\Temporal\\' + nombreFinal2 + ".tif"
@@ -196,7 +196,7 @@ arcpy.AddMessage("************* INICIANDO CICLO 3 ************")
 # # Get Raster Properties
 maxvalue = arcpy.GetRasterProperties_management(ruta_salida, "MAXIMUM")
 
-ruta_final = rutaDefecto + '\\Imagenes\\' + carpeta_format(month, year) + '\\' + nombreFinal + nombre2 + "_[" + limite_exclusion + "].tif"
+ruta_final = rutaDefecto + '\\Imagenes\\' + carpeta_format(month, year) + '\\' + nombreFinal + nombre2 + "_[" + limite_exclusion + "]_" + shapefile + ".tif"
 
 #Reclass
 myRemapRange = RemapRange([[limite_exclusion, maxvalue, 1]])
@@ -217,7 +217,7 @@ ruta_excel = rutaDefecto + '\\Data\\' + shapefile + '_EX_' + '(' + limite_exclus
 archivo_existe = os.path.isfile(ruta_excel)
 # datos para el excel
 fecha = retornar_fecha(day, month, year)
-columnas = ["ID", "FECHA", "CLASE 0 AREA (m^2)", "CLASE 1 AREA (m^2)", "SATELITE"]
+columnas = ["ID", "FECHA", "CLASE 0 AREA (m^2)", "CLASE 1 AREA (m^2)", "SENSOR"]
 nuevo_df = pd.DataFrame()
 
 if month < 10:
