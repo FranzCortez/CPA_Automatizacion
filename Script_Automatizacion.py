@@ -105,7 +105,7 @@ if(opcion == 'LANDSAT'):
     
 
     firstSplit = Raster_de_entrada.split("\\")
-    info = firstSplit.split("_")
+    info = firstSplit[len(firstSplit)-1].split("_")
 
     day = int(info[3][6:8])
     month = int(info[3][4:6])
@@ -196,7 +196,7 @@ arcpy.AddMessage("************* INICIANDO CICLO 3 ************")
 # # Get Raster Properties
 maxvalue = arcpy.GetRasterProperties_management(ruta_salida, "MAXIMUM")
 
-ruta_final = rutaDefecto + '\\Imagenes\\' + carpeta_format(month, year) + '\\' + nombreFinal + nombre2 + "_PROCESADA.tif"
+ruta_final = rutaDefecto + '\\Imagenes\\' + carpeta_format(month, year) + '\\' + nombreFinal + nombre2 + "_[" + limite_exclusion + "].tif"
 
 #Reclass
 myRemapRange = RemapRange([[limite_exclusion, maxvalue, 1]])
