@@ -14,6 +14,7 @@ import pandas as pd
 import os
 from os import remove
 from shutil import rmtree
+from collections import OrderedDict
 
 def current_date_format(day, month,year):
     months = ("ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC")
@@ -214,12 +215,12 @@ arcpy.gp.ZonalStatisticsAsTable_sa(ruta_final, "VALUE", ruta_final, ruta_data, "
 
 # crea archivo excel XLS
 shapefile = shapefile.replace(" ", "_")
-ruta_excel = rutaDefecto + '\\Data\\' + shapefile + '_EX_' + '(' + limite_exclusion + ').xls'
+ruta_excel = rutaDefecto + '\\Data\\' + shapefile + '_' + nombre + nombre2 + '.xls'
 archivo_existe = os.path.isfile(ruta_excel)
 # datos para el excel
 fecha = retornar_fecha(day, month, year)
 columnas = ["ID", "FECHA", "CLASE 0 AREA (m^2)", "CLASE 1 AREA (m^2)", "SENSOR"]
-nuevo_df = pd.DataFrame()
+exclusion = "EXCLUSION (-1," + limite_exclusion + ")"
 
 if month < 10:
     month = '0' + str(month)
@@ -234,16 +235,57 @@ month = int(month)
 if archivo_existe:
     arcpy.AddMessage("************* EXCEL EXISTENTE, MODIFICANDO... ************")
     # excel auxiliar para los nuevos datos
-    ruta_excel_nuevo = rutaDefecto + '\\Temporal\\' + shapefile + '_EX_' + limite_exclusion +'.xls'
+    ruta_excel_nuevo = rutaDefecto + '\\Temporal\\' + shapefile + '_' + nombre + nombre2 +'.xls'
     arcpy.TableToExcel_conversion(ruta_data, ruta_excel_nuevo, Use_field_alias_as_column_header="ALIAS", Use_domain_and_subtype_description="CODE")
-    # concatenando al excel existente
-    df1 = pd.read_excel(ruta_excel)
+    ############################################################################
+    existente = pd.read_excel(ruta_excel, sheet_name=None)
+    
+    lista_keys = []
+    lista_datas = []
+
+    for key, hoja in existente.items():
+        lista_keys.append(key)
+        lista_datas.append(pd.DataFrame(hoja))
+        
     df2 = pd.read_excel(ruta_excel_nuevo)['AREA']
-    nuevo_df = pd.concat([df1, pd.DataFrame([[id, fecha, df2[0], df2[1], infoSatelite]], columns=columnas)], sort=False)
+    df_n = pd.DataFrame([[id, fecha, df2[0], df2[1], infoSatelite]], columns=columnas)
+    
     # se eliminan los excel
     remove(ruta_excel_nuevo)
     remove(ruta_excel)
+
+    writer = pd.ExcelWriter(ruta_excel)
+
+    if exclusion in lista_keys:
+        arcpy.AddMessage("************* LA EXCLUSION ESTA ************")
+        arcpy.AddMessage(exclusion)
+        existente[exclusion] = pd.concat([existente[exclusion],df_n], sort=False)
+        existente[exclusion] = existente[exclusion].sort_values(by=["ID"])
+        #nuevo_df.to_excel(ruta_excel, index=False, sheet_name=exclusion)
+        arcpy.AddMessage(existente[exclusion])
+        
+    for key, hoja in existente.items():
+        hoja.to_excel(writer, index=False, sheet_name=key)
+
+    if exclusion not in lista_keys:
+        arcpy.AddMessage("************* NO HAY EXCLUSION, CREANDO UNA HOJA NUEVA ************")       
+        df_n.to_excel(writer, index=False, sheet_name=exclusion)
+
+    writer.save()
+    writer.close()
+
+    writer = pd.ExcelWriter(ruta_excel)
+    #ordenamiento por nombre de las hojas
+    existente = OrderedDict(sorted(pd.read_excel(ruta_excel, sheet_name=None).items()))
+        
+    for key, hoja in existente.items():
+        hoja.to_excel(writer, index=False, sheet_name=key)
+        
+    writer.save()
+    writer.close()
+    
     arcpy.AddMessage("************* MODIFICADO ************")
+    ############################################################################
 
 else:    
     # nuevo excel
@@ -253,10 +295,9 @@ else:
     df = pd.read_excel(ruta_excel)['AREA']
     nuevo_df = pd.DataFrame([[id, fecha, df[0], df[1], infoSatelite]], columns=columnas)
     arcpy.AddMessage("************* FORMATO CREADO ************")
-       
-nuevo_df = nuevo_df.sort_values(by=["ID"])
-nuevo_df.to_excel(ruta_excel, index=False, sheet_name="Hoja1")
-arcpy.AddMessage("************* EXCEL ACTUALIZADO ************") 
+    nuevo_df = nuevo_df.sort_values(by=["ID"])
+    nuevo_df.to_excel(ruta_excel, index=False, sheet_name=exclusion)
+    arcpy.AddMessage("************* EXCEL ACTUALIZADO ************")
 
 arcpy.AddMessage("************* FIN CICLO 4 *************")
 
