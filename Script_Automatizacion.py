@@ -153,6 +153,7 @@ if(L == ""):
 
 nombreFinal = current_date_format(day, month, year) + nombre
 nombreFinal2 = current_date_format(day, month, year) + nombre2
+fechaNombre = current_date_format(day, month, year)
 
 rutaTemporal = rutaDefecto + '\\Temporal\\' + nombreFinal + ".tif"
 rutaTemporal2 = rutaDefecto + '\\Temporal\\' + nombreFinal2 + ".tif"
@@ -162,6 +163,7 @@ rutaTemporal2 = rutaDefecto + '\\Temporal\\' + nombreFinal2 + ".tif"
 arcpy.AddMessage("************* INICIO CICLO 1 *************")
 
 # Process: Proyectar ráster
+
 rectificarCoordenadas(Raster_de_entrada, rutaTemporal, coordenada)
 rectificarCoordenadas(Raster_de_entrada2, rutaTemporal2, coordenada)
 
@@ -198,7 +200,8 @@ arcpy.AddMessage("************* INICIANDO CICLO 3 ************")
 # # Get Raster Properties
 maxvalue = arcpy.GetRasterProperties_management(ruta_salida, "MAXIMUM")
 
-ruta_final = rutaDefecto + '\\Imagenes\\' + carpeta_format(month, year) + '\\' + nombreFinal + nombre2 + "_[" + limite_exclusion + "]_" + shapefile + ".tif"
+shapefile = shapefile.replace(" ", "_")
+ruta_final = rutaDefecto + '\\Imagenes\\' + carpeta_format(month, year) + '\\' + nombre + nombre2 + "_" + fechaNombre + "[" + limite_exclusion + "]_" + shapefile + ".tif"
 
 #Reclass
 myRemapRange = RemapRange([[limite_exclusion, maxvalue, 1]])
@@ -210,11 +213,12 @@ arcpy.AddMessage("************* FIN CICLO 3 *************")
 arcpy.AddMessage("************* INICIANDO CICLO 4 ************")
 
 #Crea tabla
-ruta_data = rutaDefecto + '\\Temporal\\' + nombreFinal + nombre2 + "Tabla"
+ruta_data = rutaDefecto + '\\Temporal\\' + nombre + nombre2 + "_" + fechaNombre + "Tabla"
+arcpy.AddMessage(ruta_final)
+arcpy.AddMessage(ruta_data)
 arcpy.gp.ZonalStatisticsAsTable_sa(ruta_final, "VALUE", ruta_final, ruta_data, "DATA", "ALL")
 
 # crea archivo excel XLS
-shapefile = shapefile.replace(" ", "_")
 ruta_excel = rutaDefecto + '\\Data\\' + shapefile + '_' + nombre + nombre2 + '.xls'
 archivo_existe = os.path.isfile(ruta_excel)
 # datos para el excel
