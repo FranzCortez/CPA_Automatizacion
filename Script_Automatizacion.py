@@ -12,9 +12,13 @@ import arcpy
 from arcpy.sa import *
 import pandas as pd
 import os
+import sys
 from os import remove
 from shutil import rmtree
 from collections import OrderedDict
+
+def removeTemporal():
+    rmtree(rutaDefecto + '\\Temporal\\')
 
 def current_date_format(day, month,year):
     months = ("ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC")
@@ -97,6 +101,19 @@ fecha = arcpy.GetParameterAsText(12)
 
 #restructura
 
+try:   
+    prueba = float(L)
+except ValueError:
+    arcpy.AddMessage("Error: L deberia ser un NUMERO")
+    exit()
+
+try:
+    prueba = float(limite_exclusion)
+except ValueError:
+    arcpy.AddMessage("Error: El LIMITE DE EXCLUSION deberia ser un NUMERO")
+    exit()
+
+
 day = ""
 month = ""
 year = ""
@@ -164,8 +181,14 @@ arcpy.AddMessage("************* INICIO CICLO 1 *************")
 
 # Process: Proyectar ráster
 
-rectificarCoordenadas(Raster_de_entrada, rutaTemporal, coordenada)
-rectificarCoordenadas(Raster_de_entrada2, rutaTemporal2, coordenada)
+try:
+    rectificarCoordenadas(Raster_de_entrada, rutaTemporal, coordenada)
+    rectificarCoordenadas(Raster_de_entrada2, rutaTemporal2, coordenada)
+except :
+    e = sys.exc_info()[1]
+    arcpy.AddMessage(e.args[0])
+    removeTemporal()
+    exit()
 
 arcpy.AddMessage("************* FIN CICLO 1 *************")
 
@@ -178,8 +201,15 @@ ruta_temporal_re_1 = rutaDefecto + '\\Temporal\\' + nombreFinal + "_re.tif"
 ruta_temporal_re_2 = rutaDefecto + '\\Temporal\\' + nombreFinal2 + "_re.tif"
 
 # Process: Recortar
-primer_recorte(rutaTemporal, ruta_temporal_re_1, shapefile)
-primer_recorte(rutaTemporal2, ruta_temporal_re_2, shapefile)
+try:
+    primer_recorte(rutaTemporal, ruta_temporal_re_1, shapefile)
+    primer_recorte(rutaTemporal2, ruta_temporal_re_2, shapefile)
+except :
+    e = sys.exc_info()[1]
+    arcpy.AddMessage(e.args[0])
+    removeTemporal()
+    exit()
+
 
 # Local variables:
 x = ruta_temporal_re_1
@@ -190,7 +220,14 @@ formula = '( ( (Float("' + x + '")) - (Float("' + y + '")) ) / ( (Float("' + x +
 ruta_salida = rutaDefecto + '\\Temporal\\' + nombreFinal + nombre2 + "_cal.tif"
 
 # Process: Calculadora ráster
-calculo(formula, ruta_salida)
+try:
+    calculo(formula, ruta_salida)
+except :
+    e = sys.exc_info()[1]
+    arcpy.AddMessage(e.args[0])
+    removeTemporal()
+    exit()
+
 
 arcpy.AddMessage("************* FIN CICLO 2 *************")
 
@@ -204,9 +241,16 @@ shapefile = shapefile.replace(" ", "_")
 ruta_final = rutaDefecto + '\\Imagenes\\' + carpeta_format(month, year) + '\\' + nombre + nombre2 + "_" + fechaNombre + "[" + limite_exclusion + "]_" + shapefile + ".tif"
 
 #Reclass
-myRemapRange = RemapRange([[limite_exclusion, maxvalue, 1]])
-outReclass = Reclassify(ruta_salida, "Value", myRemapRange)
-outReclass.save(ruta_final)
+try:
+    myRemapRange = RemapRange([[limite_exclusion, maxvalue, 1]])
+    outReclass = Reclassify(ruta_salida, "Value", myRemapRange)
+    outReclass.save(ruta_final)
+except :
+    e = sys.exc_info()[1]
+    arcpy.AddMessage(e.args[0])
+    removeTemporal()
+    exit()
+
 
 arcpy.AddMessage("************* FIN CICLO 3 *************")
 
@@ -214,9 +258,14 @@ arcpy.AddMessage("************* INICIANDO CICLO 4 ************")
 
 #Crea tabla
 ruta_data = rutaDefecto + '\\Temporal\\' + nombre + nombre2 + "_" + fechaNombre + "Tabla"
-arcpy.AddMessage(ruta_final)
-arcpy.AddMessage(ruta_data)
-arcpy.gp.ZonalStatisticsAsTable_sa(ruta_final, "VALUE", ruta_final, ruta_data, "DATA", "ALL")
+
+try:
+    arcpy.gp.ZonalStatisticsAsTable_sa(ruta_final, "VALUE", ruta_final, ruta_data, "DATA", "ALL")
+except :
+    e = sys.exc_info()[1]
+    arcpy.AddMessage(e.args[0])
+    removeTemporal()
+    exit()
 
 # crea archivo excel XLS
 ruta_excel = rutaDefecto + '\\Data\\' + shapefile + '_' + nombre + nombre2 + '.xls'
@@ -262,11 +311,8 @@ if archivo_existe:
 
     if exclusion in lista_keys:
         arcpy.AddMessage("************* LA EXCLUSION ESTA ************")
-        arcpy.AddMessage(exclusion)
         existente[exclusion] = pd.concat([existente[exclusion],df_n], sort=False)
         existente[exclusion] = existente[exclusion].sort_values(by=["ID"])
-        #nuevo_df.to_excel(ruta_excel, index=False, sheet_name=exclusion)
-        arcpy.AddMessage(existente[exclusion])
         
     for key, hoja in existente.items():
         hoja.to_excel(writer, index=False, sheet_name=key)
@@ -314,4 +360,4 @@ if mostrar_dataset == "true":
     layer = result.getOutput(0)
     pt = arcpy.mapping.AddLayer(df, layer, 'AUTO_ARRANGE')
 
-rmtree(rutaDefecto + '\\Temporal\\')
+removeTemporal()
